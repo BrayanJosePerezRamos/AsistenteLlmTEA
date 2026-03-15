@@ -1,0 +1,58 @@
+/* ====================================================
+   AsistenteTEA — Estilos personalizados
+   ==================================================== */
+
+/* Fuente más legible para TEA */
+body, .gradio-container {
+    font-family: 'Segoe UI', 'Arial', sans-serif !important;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+/* Semáforo social — columna lateral pegajosa */
+#semaforo-col {
+    position: sticky;
+    top: 12px;
+    align-self: flex-start;
+}
+
+/* Chatbot — burbujas más claras */
+.message.user .bubble-wrap {
+    background-color: #dbeafe !important;
+    border-radius: 14px 14px 4px 14px !important;
+}
+
+.message.bot .bubble-wrap {
+    background-color: #f0fdf4 !important;
+    border-radius: 14px 14px 14px 4px !important;
+}
+
+/* Botón Iniciar — mayor contraste */
+.primary-btn {
+    font-size: 1.05em !important;
+    font-weight: 600 !important;
+}
+
+/* Historia Social — secciones con borde de color */
+.historia-descripcion {
+    border-left: 4px solid #3b82f6;
+    padding-left: 12px;
+    margin-bottom: 8px;
+}
+
+.historia-perspectiva {
+    border-left: 4px solid #8b5cf6;
+    padding-left: 12px;
+    margin-bottom: 8px;
+}
+
+.historia-directiva {
+    border-left: 4px solid #10b981;
+    padding-left: 12px;
+    margin-bottom: 8px;
+}
+
+/* Reducir ansiedad: sin animaciones bruscas */
+* {
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}

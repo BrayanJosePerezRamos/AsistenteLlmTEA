@@ -1,0 +1,25 @@
+# UI
+gradio>=4.40.0,<5.0.0
+
+# LLM
+ollama>=0.3.0
+
+# STT: Moonshine (pure Python, no cuDNN dependencies, CPU Edge AI)
+moonshine-voice
+# TTS
+piper-tts>=1.2.0
+onnxruntime>=1.17.0
+
+# Tone analysis
+pysentimiento>=0.7.0
+
+# Image generation
+diffusers==0.27.2
+accelerate>=0.30.0
+transformers>=4.40.0
+
+# Audio / numeric
+soundfile>=0.12.1
+numpy>=1.24.0
+Pillow>=9.5.0
+scipy>=1.10.0
