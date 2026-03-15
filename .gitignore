@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+models/piper/*.onnx
+models/piper/*.json
+output/
+.env
+*.wav
+*.png
