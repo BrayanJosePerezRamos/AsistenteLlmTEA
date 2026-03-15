@@ -22,6 +22,15 @@ _EMOTION_TO_SEMAFORO: dict = {
     "surprise":("amarillo", "Tono adecuado, aunque puede sorprender al interlocutor."),
 }
 
+# Emociones que pertenecen a cada color (para la lógica de probabilidades acumuladas)
+_ROJO_EMOTIONS    = {"anger", "disgust"}
+_AMARILLO_EMOTIONS = {"fear", "sadness", "surprise"}
+
+# Umbrales: si la suma de probabilidades de un color supera el umbral,
+# se usa ese color aunque "others"/"joy" sea el top individual.
+_UMBRAL_ROJO     = 0.07   # calibrado con datos reales: neutros ~0.02, insultos ~0.08+
+_UMBRAL_AMARILLO = 0.20
+
 
 class ToneAnalyzer:
     """Lazy-loading wrapper de pysentimiento."""
@@ -47,9 +56,28 @@ class ToneAnalyzer:
         self._ensure_loaded()
         try:
             result = self._analyzer.predict(texto)
-            emocion = result.output.lower()
-            confianza = float(max(result.probas.values())) if result.probas else 0.5
-        except Exception:
+            emocion_top = str(result.output).lower()
+            # Normalizar claves de probas a minúsculas para comparaciones seguras
+            probas = {k.lower(): float(v) for k, v in result.probas.items()} if result.probas else {}
+
+            print(f"[ToneAnalyzer] '{texto[:50]}' → top={emocion_top} | {probas}")
+
+            # Probabilidad acumulada por color
+            p_rojo     = sum(probas.get(e, 0.0) for e in _ROJO_EMOTIONS)
+            p_amarillo = sum(probas.get(e, 0.0) for e in _AMARILLO_EMOTIONS)
+
+            # Elegir emoción representativa según umbrales
+            if p_rojo >= _UMBRAL_ROJO:
+                emocion = max(_ROJO_EMOTIONS, key=lambda e: probas.get(e, 0.0))
+            elif p_amarillo >= _UMBRAL_AMARILLO:
+                emocion = max(_AMARILLO_EMOTIONS, key=lambda e: probas.get(e, 0.0))
+            else:
+                emocion = emocion_top
+
+            confianza = probas.get(emocion, 0.5)
+
+        except Exception as e:
+            print(f"[ToneAnalyzer] Error en predict(): {e}")
             emocion = "others"
             confianza = 0.5
 

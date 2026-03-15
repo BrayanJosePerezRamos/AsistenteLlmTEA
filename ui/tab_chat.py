@@ -150,6 +150,7 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
             except RuntimeError as e:
                 opener = f"⚠️ Error al conectar con Ollama: {e}"
 
+            state.messages.append({"role": "user", "content": "Hola."})
             state.add_assistant_message(opener)
 
             chat_history = [{"role": "assistant", "content": opener}]
@@ -173,8 +174,9 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
             )
 
         def on_send(user_text, audio_path, chat_history, state):
+            _noop = gr.update()
             if state is None or not state.active:
-                yield chat_history, render_semaforo_idle(), gr.update(visible=False), state
+                yield chat_history, render_semaforo_idle(), gr.update(visible=False), _noop, _noop, state
                 return
 
             # Transcribir audio si viene del micrófono
@@ -185,15 +187,18 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
                     user_text = f"[Error STT: {e}]"
 
             if not user_text or not user_text.strip():
-                yield chat_history, render_semaforo_idle(), gr.update(visible=False), state
+                if audio_path:
+                    err_msg = "❌ No se pudo transcribir el audio. Escribe tu respuesta por texto."
+                    chat_history = list(chat_history) + [{"role": "assistant", "content": err_msg}]
+                yield chat_history, render_semaforo_idle(), gr.update(visible=False), _noop, gr.update(value=None), state
                 return
 
             user_text = user_text.strip()
 
-            # Mostrar mensaje del usuario de inmediato
+            # Mostrar mensaje del usuario de inmediato + limpiar inputs
             chat_history = list(chat_history) + [{"role": "user", "content": user_text}]
             state.add_user_message(user_text)
-            yield chat_history, render_semaforo_idle(), gr.update(visible=False), state
+            yield chat_history, render_semaforo_idle(), gr.update(visible=False), gr.update(value=""), gr.update(value=None), state
 
             # Análisis de tono (CPU, rápido) — en paralelo al streaming
             tone_result = None
@@ -201,8 +206,8 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
                 try:
                     tone_result = tone_analyzer.analizar(user_text)
                     state.add_tone_result(tone_result)
-                except Exception:
-                    pass
+                except Exception as e:
+                    print(f"[on_send] Error en tone_analyzer: {e}")
 
             semaforo_html_val = render_semaforo(tone_result)
 
@@ -213,7 +218,7 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
                 for token in llm.chat_stream(state.messages):
                     partial += token
                     chat_history[-1] = {"role": "assistant", "content": partial}
-                    yield chat_history, semaforo_html_val, gr.update(visible=False), state
+                    yield chat_history, semaforo_html_val, gr.update(visible=False), _noop, _noop, state
             except RuntimeError as e:
                 partial = f"⚠️ Error: {e}"
                 chat_history[-1] = {"role": "assistant", "content": partial}
@@ -227,7 +232,7 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
                 if wav:
                     audio_val = gr.update(value=wav, visible=True)
 
-            yield chat_history, semaforo_html_val, audio_val, state
+            yield chat_history, semaforo_html_val, audio_val, _noop, _noop, state
 
         def on_end(state, chat_history):
             if state is None:
@@ -266,13 +271,13 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
         send_btn.click(
             on_send,
             inputs=[text_input, mic_input, chatbot, session_state],
-            outputs=[chatbot, semaforo_html, bot_audio, session_state],
+            outputs=[chatbot, semaforo_html, bot_audio, text_input, mic_input, session_state],
         )
         # Enviar también con Enter en el textbox
         text_input.submit(
             on_send,
             inputs=[text_input, mic_input, chatbot, session_state],
-            outputs=[chatbot, semaforo_html, bot_audio, session_state],
+            outputs=[chatbot, semaforo_html, bot_audio, text_input, mic_input, session_state],
         )
         end_btn.click(
             on_end,

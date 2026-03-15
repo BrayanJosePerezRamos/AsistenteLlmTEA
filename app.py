@@ -1,5 +1,5 @@
 """
-AsistenteTEA — Simulador multimodal de habilidades sociales (TEA/NEAE).
+Asistente — Simulador multimodal de habilidades sociales (TEA/NEAE).
 Punto de entrada principal. Instancia los módulos y lanza la interfaz Gradio.
 
 Uso:
@@ -58,7 +58,7 @@ CSS_PATH = os.path.join(os.path.dirname(__file__), "ui", "styles.css")
 # Instanciación de módulos (lazy-loading interno)
 # ======================================================================
 
-print("[AsistenteTEA] Inicializando módulos…")
+print("[Asistente] Inicializando módulos…")
 
 llm = LLMEngine(model_name=LLM_MODEL)
 
@@ -72,7 +72,8 @@ if not llm.is_available():
 tone_analyzer = ToneAnalyzer()
 stt = STTEngine(model_name=STT_MODEL)
 tts = TTSEngine()
-image_gen = ImageGenEngine()
+image_gen = None  # Desactivado temporalmente — descomentar para rehabilitar:
+# image_gen = ImageGenEngine()
 
 historia_generator = HistoriaSocialGenerator(
     llm=llm,
@@ -81,7 +82,7 @@ historia_generator = HistoriaSocialGenerator(
     tone_analyzer=tone_analyzer,
 )
 
-print("[AsistenteTEA] Módulos listos.")
+print("[Asistente] Módulos listos.")
 
 # ======================================================================
 # Construcción de la interfaz Gradio
@@ -90,7 +91,7 @@ print("[AsistenteTEA] Módulos listos.")
 css = open(CSS_PATH).read() if os.path.exists(CSS_PATH) else ""
 
 with gr.Blocks(
-    title="AsistenteTEA — Habilidades Sociales",
+    title="Asistente — Habilidades Sociales",
     theme=gr.themes.Soft(
         primary_hue="blue",
         secondary_hue="green",
@@ -100,7 +101,7 @@ with gr.Blocks(
 ) as demo:
 
     gr.Markdown(
-        "# 🎓 AsistenteTEA\n"
+        "# 🎓 Asistente\n"
         "Simulador de habilidades sociales para estudiantes universitarios. "
         "Practica situaciones reales en un entorno seguro y privado."
     )
