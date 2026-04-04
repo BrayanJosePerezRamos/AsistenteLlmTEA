@@ -18,11 +18,6 @@ import sys
 
 import gradio as gr
 
-# ── Hotfix gradio_client 1.3.0 ────────────────────────────────────────────────
-# _json_schema_to_python_type() falla con AttributeError cuando schema es un
-# booleano Python (True/False), lo que ocurre con additionalProperties:false en
-# los schemas de gr.Chatbot(type="messages").
-# La función recursiva necesita tolerar schemas no-dict devolviendo "Any".
 import gradio_client.utils as _gc_utils
 _orig_json_schema_to_python_type = _gc_utils._json_schema_to_python_type
 def _safe_json_schema_to_python_type(schema, defs=None):
