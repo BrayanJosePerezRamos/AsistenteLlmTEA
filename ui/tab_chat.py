@@ -20,6 +20,12 @@ from config.prompts import build_system_prompt
 from core.session import SessionState, ToneResult
 from ui.components import render_semaforo, render_semaforo_idle
 
+# Límite duro de caracteres por mensaje. Evita que un texto largo
+# (p.ej. pegado por accidente) sature el contexto del LLM o bloquee
+# el análisis de tono. ~1500 chars cubre ~300 palabras, mucho más
+# que un turno conversacional típico.
+_MAX_INPUT_CHARS = 1500
+
 
 def build_chat_tab(llm, tone_analyzer, stt, tts):
     """
@@ -56,7 +62,7 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
                     interactive=True,
                     scale=2,
                 )
-                start_btn = gr.Button("▶ Iniciar sesión", variant="primary", scale=1)
+                start_btn = gr.Button("▶  Iniciar sesión", variant="primary", scale=1)
 
             scenario_desc = gr.Markdown(
                 _scenario_preview(list(SCENARIOS.keys())[0], role_choices_for_scenario(list(SCENARIOS.keys())[0])[0][1]),
@@ -72,6 +78,7 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
                     height=420,
                     show_copy_button=True,
                     bubble_full_width=False,
+                    elem_id="main-chatbot",
                 )
             with gr.Column(scale=1, min_width=180):
                 semaforo_html = gr.HTML(
@@ -90,25 +97,38 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
         # ---- Entrada del usuario ----
         with gr.Row():
             text_input = gr.Textbox(
-                placeholder="Escribe tu respuesta aquí…",
+                placeholder="Escribe tu respuesta aquí… (Enter para enviar, Ctrl+Enter para nueva línea)",
                 label="",
                 lines=2,
+                max_lines=8,           # Crece hasta 8 líneas, luego scroll interno
                 scale=4,
                 interactive=False,
+                elem_id="chat-text-input",
             )
             mic_input = gr.Audio(
                 sources=["microphone"],
                 type="filepath",
-                label="🎤 Micrófono",
+                label="◉  Micrófono",
                 scale=1,
                 interactive=False,
             )
 
         with gr.Row():
-            send_btn = gr.Button("Enviar", variant="primary", interactive=False, scale=3)
-            end_btn = gr.Button("⏹ Terminar sesión", variant="stop", interactive=False, scale=1)
+            send_btn = gr.Button("Enviar", variant="primary", interactive=False, scale=3, elem_id="chat-send-btn")
+            end_btn = gr.Button("■  Terminar sesión", variant="stop", interactive=False, scale=1)
+            reset_btn = gr.Button("↻  Reiniciar", variant="secondary", interactive=True, scale=1, elem_id="chat-reset-btn")
 
         status_md = gr.Markdown("_Configura un escenario y pulsa **Iniciar sesión** para comenzar._")
+
+        # Cartel desplegable con los atajos de teclado disponibles. Cerrado
+        # por defecto para no entorpecer; el usuario lo abre si lo necesita.
+        with gr.Accordion("⌨  Atajos y trucos", open=False):
+            gr.Markdown(
+                "- **Enter** → Enviar mensaje\n"
+                "- **Ctrl+Enter** (o **Shift+Enter**) → Insertar salto de línea\n"
+                "- **»** junto a cada audio → Alternar reproducción 1× / 1.5×\n"
+                "- Los toggles **T+** y **◐** del encabezado se recuerdan entre sesiones"
+            )
 
         # ================================================================
         # Callbacks
@@ -179,21 +199,43 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
                 yield chat_history, render_semaforo_idle(), gr.update(visible=False), _noop, _noop, state
                 return
 
-            # Transcribir audio si viene del micrófono
+            # Transcribir audio si viene del micrófono. Usamos transcribe()
+            # directo (no transcribe_or_empty) para diferenciar el motivo
+            # del fallo y dar feedback específico al usuario.
             if not user_text and audio_path and stt is not None:
                 try:
-                    user_text = stt.transcribe_or_empty(audio_path)
-                except Exception as e:
-                    user_text = f"[Error STT: {e}]"
+                    result = stt.transcribe(audio_path)
+                    if result.exito:
+                        user_text = result.texto
+                    else:
+                        # Distinguir audio demasiado largo de otros fallos
+                        err = (result.error or "").lower()
+                        if "demasiado largo" in err:
+                            gr.Warning(result.error)
+                        else:
+                            gr.Warning("No se pudo transcribir el audio. Vuelve a intentarlo o escribe tu respuesta.")
+                        yield chat_history, render_semaforo_idle(), gr.update(visible=False), _noop, _noop, state
+                        return
+                except Exception as exc:
+                    print(f"[on_send] Excepción STT: {exc}")
+                    gr.Warning("Error al transcribir el audio.")
+                    yield chat_history, render_semaforo_idle(), gr.update(visible=False), _noop, _noop, state
+                    return
 
             if not user_text or not user_text.strip():
-                if audio_path:
-                    err_msg = "❌ No se pudo transcribir el audio. Escribe tu respuesta por texto."
-                    chat_history = list(chat_history) + [{"role": "assistant", "content": err_msg}]
-                yield chat_history, render_semaforo_idle(), gr.update(visible=False), _noop, gr.update(value=None), state
+                yield chat_history, render_semaforo_idle(), gr.update(visible=False), _noop, _noop, state
                 return
 
             user_text = user_text.strip()
+
+            # Validación de longitud — protege LLM y tone_analyzer.
+            if len(user_text) > _MAX_INPUT_CHARS:
+                gr.Warning(
+                    f"Mensaje demasiado largo ({len(user_text)} caracteres). "
+                    f"Máximo {_MAX_INPUT_CHARS}."
+                )
+                yield chat_history, render_semaforo_idle(), gr.update(visible=False), _noop, _noop, state
+                return
 
             # Mostrar mensaje del usuario de inmediato + limpiar inputs
             chat_history = list(chat_history) + [{"role": "user", "content": user_text}]
@@ -238,6 +280,26 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
             if state is None:
                 state = SessionState()
             state.active = False
+            # Mensaje destacado: el JS también detecta este texto para
+            # poner el badge ● en la pestaña Historia Social.
+            # Color explícito (texto oscuro sobre fondo claro) para que
+            # se lea sin importar el tema activo de Gradio.
+            banner = (
+                "<div class='session-ended-banner' style='"
+                "background:#ecfdf5;"
+                "color:#064e3b;"
+                "border-left:4px solid #10b981;"
+                "padding:14px 18px;"
+                "border-radius:6px;"
+                "font-size:1.05em;"
+                "'>"
+                "<strong style='color:#064e3b;'>✓ Sesión finalizada.</strong><br>"
+                "<span style='color:#064e3b;'>"
+                "Ve a la pestaña <strong style='color:#064e3b;'>Historia Social</strong> "
+                "(arriba) para generar tu resumen."
+                "</span>"
+                "</div>"
+            )
             return (
                 state,
                 chat_history,
@@ -246,7 +308,26 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
                 gr.update(interactive=False),  # send_btn
                 gr.update(interactive=False),  # end_btn
                 gr.update(interactive=True),   # start_btn
-                "_Sesión finalizada. Ve a la pestaña **Historia Social** para ver el resumen._",
+                banner,
+            )
+
+        def on_reset(state):
+            """Vuelve al estado inicial: limpia chat, vacía sesión y
+            deja al usuario en la pantalla de selección de escenario."""
+            if state is None:
+                state = SessionState()
+            state.reset()
+            return (
+                state,
+                [],                              # chatbot vacío
+                render_semaforo_idle(),          # semáforo a estado idle
+                gr.update(value=None, visible=False),  # bot_audio
+                gr.update(value="", interactive=False),  # text_input
+                gr.update(value=None, interactive=False),  # mic_input
+                gr.update(interactive=False),    # send_btn
+                gr.update(interactive=False),    # end_btn
+                gr.update(interactive=True),     # start_btn
+                "_Configura un escenario y pulsa **Iniciar sesión** para comenzar._",
             )
 
         # ---- Wiring ----
@@ -287,8 +368,19 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
                 text_input, mic_input, send_btn, end_btn, start_btn, status_md,
             ],
         )
+        reset_btn.click(
+            on_reset,
+            inputs=[session_state],
+            outputs=[
+                session_state, chatbot, semaforo_html, bot_audio,
+                text_input, mic_input, send_btn, end_btn, start_btn, status_md,
+            ],
+        )
 
-    return tab, session_state
+    # Exponemos start/end/reset_btn para que app.py pueda añadir un
+    # .then() que habilite/deshabilite el botón "Generar Historia"
+    # de la otra pestaña (wiring cross-tab).
+    return tab, session_state, start_btn, end_btn, reset_btn
 
 
 # ------------------------------------------------------------------

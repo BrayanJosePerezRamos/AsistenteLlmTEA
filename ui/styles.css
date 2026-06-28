@@ -56,3 +56,221 @@ body, .gradio-container {
 * {
     transition: background-color 0.3s ease, border-color 0.3s ease;
 }
+
+/* Pestañas más grandes y visibles ("Practicar escenario" / "Historia Social") */
+.tab-nav button {
+    font-size: 1.20em !important;
+    padding: 14px 24px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.2px;
+    position: relative;  /* para badge dinámico desde JS */
+}
+.tab-nav button.selected {
+    border-bottom: 3px solid #3b82f6 !important;
+}
+
+/* Badge "●" sobre la pestaña de Historia Social cuando hay resultado
+   nuevo. Se añade/quita desde scripts.js. */
+.tab-nav button .new-badge {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    color: #dc3545;
+    font-size: 1.4em;
+    line-height: 1;
+    animation: pulse-badge 1.4s ease-in-out infinite;
+}
+@keyframes pulse-badge {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.45; }
+}
+
+/* ====================================================
+   Accesibilidad — toggles cliente
+   ==================================================== */
+
+/* Texto grande: aumenta las variables CSS de Gradio (--text-*) y la
+   tipografía base. Gradio usa estas variables en casi todos sus
+   componentes, así que sobrescribirlas afecta a todo el UI a la vez. */
+body.large-text {
+    --text-xxs: 12px !important;
+    --text-xs:  14px !important;
+    --text-sm:  16px !important;
+    --text-md:  18px !important;
+    --text-lg:  20px !important;
+    --text-xl:  24px !important;
+    --text-xxl: 30px !important;
+    --body-text-size: 18px !important;
+    font-size: 18px !important;
+}
+body.large-text .gradio-container,
+body.large-text .gradio-container * {
+    font-size: inherit;
+}
+body.large-text .tab-nav button {
+    font-size: 1.30em !important;
+}
+body.large-text .message .bubble-wrap,
+body.large-text textarea,
+body.large-text input {
+    font-size: 1.08em !important;
+}
+body.large-text label {
+    font-size: 1.05em !important;
+}
+/* Cabeceras del Markdown (título "Asistente", "Configurar escenario",
+   etc.) — Gradio las renderiza como h1/h2/h3 con font-size fijo, hay
+   que sobrescribirlas explícitamente. */
+body.large-text h1 { font-size: 2.6em !important; }
+body.large-text h2 { font-size: 2.0em !important; }
+body.large-text h3 { font-size: 1.6em !important; }
+body.large-text h4 { font-size: 1.3em !important; }
+body.large-text p, body.large-text li, body.large-text span, body.large-text div {
+    font-size: inherit;
+}
+
+/* Alto contraste: blanco sobre negro / negro sobre blanco con bordes
+   gruesos para máxima legibilidad (usuarios con baja visión). */
+body.high-contrast {
+    background: #000 !important;
+    color: #fff !important;
+}
+body.high-contrast .gradio-container,
+body.high-contrast .block,
+body.high-contrast .form {
+    background: #000 !important;
+    color: #fff !important;
+}
+/* Burbujas chat — usuario en amarillo, bot en blanco. Cubrimos tanto
+   el wrapper exterior (.message.user / .message.bot) como el interior
+   (.bubble-wrap) y FORZAMOS color en todos los descendientes para que
+   no se quede texto blanco heredado del tema oscuro de Gradio. */
+body.high-contrast .message.user,
+body.high-contrast .message.user .bubble-wrap,
+body.high-contrast .message.user .bubble-wrap *,
+body.high-contrast .message.user .md,
+body.high-contrast .message.user p {
+    background: #ffd700 !important;
+    color: #000 !important;
+    border-color: #fff !important;
+}
+body.high-contrast .message.bot,
+body.high-contrast .message.bot .bubble-wrap,
+body.high-contrast .message.bot .bubble-wrap *,
+body.high-contrast .message.bot .md,
+body.high-contrast .message.bot p {
+    background: #fff !important;
+    color: #000 !important;
+    border-color: #ffd700 !important;
+}
+/* Contorno explícito en la burbuja entera */
+body.high-contrast .message.user .bubble-wrap {
+    border: 2px solid #fff !important;
+}
+body.high-contrast .message.bot .bubble-wrap {
+    border: 2px solid #ffd700 !important;
+}
+/* Fondo del propio chatbot (zona vacía alrededor de las burbujas) */
+body.high-contrast #main-chatbot,
+body.high-contrast #main-chatbot .bubble-wrap,
+body.high-contrast .chatbot {
+    background: #000 !important;
+}
+body.high-contrast button {
+    background: #ffd700 !important;
+    color: #000 !important;
+    border: 2px solid #fff !important;
+}
+body.high-contrast input,
+body.high-contrast textarea {
+    background: #fff !important;
+    color: #000 !important;
+    border: 2px solid #ffd700 !important;
+}
+/* Checkbox en alto contraste: el native tick puede no verse por el
+   accent-color del navegador o por estilos Gradio. Usamos appearance:none
+   + un ✓ dibujado en CSS :checked::after para garantizar visibilidad. */
+body.high-contrast input[type="checkbox"] {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    width: 24px !important;
+    height: 24px !important;
+    background: #000 !important;
+    border: 3px solid #ffd700 !important;
+    border-radius: 4px !important;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+}
+body.high-contrast input[type="checkbox"]:checked {
+    background: #ffd700 !important;
+}
+body.high-contrast input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -55%);
+    font-size: 22px;
+    font-weight: 900;
+    color: #000;
+    line-height: 1;
+}
+body.high-contrast .session-ended-banner,
+body.high-contrast .session-ended-banner * {
+    background: #000 !important;
+    color: #ffd700 !important;
+    border-color: #ffd700 !important;
+}
+/* Esquema Carol Gray en alto contraste — los colores inline tienen
+   máxima prioridad, por eso usamos !important para sobrescribirlos. */
+body.high-contrast .esquema-carol-gray,
+body.high-contrast .esquema-carol-gray * {
+    background: #000 !important;
+    color: #ffd700 !important;
+    border-color: #ffd700 !important;
+}
+body.high-contrast .esquema-cabecera {
+    border: 2px solid #ffd700 !important;
+}
+body.high-contrast .historia-descripcion,
+body.high-contrast .historia-perspectiva,
+body.high-contrast .historia-directiva {
+    border-left: 5px solid #ffd700 !important;
+    background: #000 !important;
+}
+
+/* Tooltip al hacer hover sobre el semáforo (atributo data-tooltip).
+   No requiere JS — sólo CSS. */
+[data-tooltip] {
+    cursor: help;
+}
+[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 8px;
+    background: #1f2937;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.85em;
+    line-height: 1.4;
+    white-space: normal;
+    width: max-content;
+    max-width: 260px;
+    z-index: 9999;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    pointer-events: none;
+}
+
+/* Mensaje destacado al terminar sesión */
+.session-ended-banner {
+    background: #ecfdf5;
+    border-left: 4px solid #10b981;
+    padding: 14px 18px;
+    border-radius: 6px;
+    font-size: 1.05em;
+}

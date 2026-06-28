@@ -4,9 +4,28 @@ Gestiona streaming de chat y el ciclo de vida del modelo en VRAM.
 """
 
 import threading
-from typing import Iterator, List, Dict, Optional
+import time
+from typing import Iterator, List, Dict
 
 import ollama
+
+
+def _truncate_for_llm(messages: List[Dict[str, str]], max_turns: int = 12) -> List[Dict[str, str]]:
+    """Devuelve el system prompt + los últimos `max_turns` mensajes
+    user/assistant. NO modifica la lista original — Historia Social
+    necesita la conversación completa, solo el LLM recibe la versión
+    recortada para evitar degradación del LLM en contextos
+    largos y mantener la latencia baja a partir del turno ~7."""
+    if not messages:
+        return messages
+    system = [m for m in messages if m.get("role") == "system"]
+    others = [m for m in messages if m.get("role") != "system"]
+    return system + others[-max_turns:]
+
+
+def _estimate_tokens(messages: List[Dict[str, str]]) -> int:
+    """Estimación rápida de tokens (chars/4). Solo para log/métricas."""
+    return sum(len(m.get("content", "")) for m in messages) // 4
 
 
 class LLMEngine:
@@ -20,7 +39,7 @@ class LLMEngine:
 
     def __init__(
         self,
-        model_name: str = "qwen2.5:1.5b",
+        model_name: str = "qwen2.5:3b",
         keep_alive: str = "10m",
         max_tokens: int = 150,
     ):
@@ -50,11 +69,17 @@ class LLMEngine:
         Raises:
             RuntimeError: Si Ollama no está disponible o el modelo no existe.
         """
+        # Truncar contexto para mantener latencia baja en conversaciones largas
+        msgs_llm = _truncate_for_llm(messages)
+        tokens_ctx = _estimate_tokens(msgs_llm)
+        t0 = time.time()
+        first_token_ms = None
+
         with self.vram_lock:
             try:
                 stream = ollama.chat(
                     model=self.model_name,
-                    messages=messages,
+                    messages=msgs_llm,
                     stream=True,
                     keep_alive=self.keep_alive,
                     options={"num_predict": self.max_tokens},
@@ -62,6 +87,14 @@ class LLMEngine:
                 for chunk in stream:
                     token = chunk["message"]["content"]
                     if token:
+                        if first_token_ms is None:
+                            first_token_ms = int((time.time() - t0) * 1000)
+                            # Métrica para informe TFG: latencia primer token + tamaño contexto
+                            print(
+                                f"[LLM] tokens_ctx~{tokens_ctx} "
+                                f"(msgs_total={len(messages)}, msgs_enviados={len(msgs_llm)}) "
+                                f"first_token_ms={first_token_ms}"
+                            )
                         yield token
             except Exception as exc:
                 raise RuntimeError(
@@ -133,8 +166,9 @@ class LLMEngine:
                 keep_alive=self.keep_alive,
                 options={"num_predict": 1},
             )
-        except Exception:
-            pass
+            print(f"[LLM] Modelo '{self.model_name}' cargado en VRAM.")
+        except Exception as e:
+            print(f"[LLM] Advertencia: no se pudo precargar el modelo '{self.model_name}': {e}")
 
     def is_available(self) -> bool:
         """Comprueba si Ollama está corriendo y el modelo existe."""

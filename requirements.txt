@@ -4,8 +4,8 @@ gradio>=4.40.0,<5.0.0
 # LLM
 ollama>=0.3.0
 
-# STT: Moonshine (pure Python, no cuDNN dependencies, CPU Edge AI)
-moonshine-voice
+# STT: faster-whisper (CTranslate2, inferencia optimizada en CPU con int8)
+faster-whisper>=1.0.0
 # TTS
 piper-tts>=1.2.0
 onnxruntime>=1.17.0

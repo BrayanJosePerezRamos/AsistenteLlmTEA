@@ -3,11 +3,12 @@ Orquestador de la Historia Social (RF4).
 Coordina:
   1. Generación de texto (LLM, Carol Gray)
   2. Síntesis de audio (TTS, Piper)
-  3. Generación de imagen (Tiny-SD, con swap de VRAM)
+  3. Esquema visual estructurado (HTML/SVG, sin modelo IA)
 
-La secuencia de VRAM es:
-  Adquirir vram_lock → evictar LLM → cargar Tiny-SD → generar imagen
-  → descargar Tiny-SD → liberar vram_lock → [LLM vuelve a cargarse lazy]
+NOTA: la antigua generación de imagen con Tiny-SD ha sido reemplazada
+por un esquema visual construido en código (ver ui.components.
+render_esquema_carol_gray). El swap de VRAM ya no es necesario porque
+no hay ningún modelo de imagen en juego.
 """
 
 import json
@@ -31,7 +32,10 @@ class HistoriaSocial:
 
     texto_completo: str
     audio_path: str
-    imagen_path: str
+    # imagen_path se mantiene por compatibilidad con código anterior,
+    # pero siempre vacío. El nuevo visual es esquema_html generado en
+    # ui.components.render_esquema_carol_gray() desde esta dataclass.
+    imagen_path: str = ""
 
     resumen_semaforo: Dict[str, int] = field(default_factory=dict)
     num_turnos: int = 0
@@ -102,13 +106,11 @@ class HistoriaSocialGenerator:
             except Exception:
                 audio_path = ""
 
-        # ---- Paso 3: Imagen (con swap de VRAM) ----
-        _progress("Generando ilustración (intercambiando modelos en VRAM)…", 0.6)
-        imagen_path = ""
-        if self.image_gen is not None and self.image_gen.is_available():
-            imagen_path = self._generar_imagen_con_swap(scenario, role)
-
-        # ---- Paso 4: Resumen del semáforo ----
+        # ---- Paso 3: Resumen del semáforo ----
+        # (Antes había un paso "Generar imagen Tiny-SD" con swap VRAM.
+        #  Reemplazado por esquema visual HTML construido en la UI a
+        #  partir de esta misma dataclass — más rápido y sin "imágenes
+        #  raras".)
         _progress("Calculando resumen del semáforo social…", 0.9)
         resumen_semaforo: Dict[str, int] = {"verde": 0, "amarillo": 0, "rojo": 0}
         if self.tone_analyzer is not None:
@@ -125,7 +127,7 @@ class HistoriaSocialGenerator:
             directiva=directiva,
             texto_completo=texto_completo,
             audio_path=audio_path,
-            imagen_path=imagen_path,
+            imagen_path="",
             resumen_semaforo=resumen_semaforo,
             num_turnos=session_state.turn_count,
         )
@@ -159,31 +161,6 @@ class HistoriaSocialGenerator:
             "directiva": "Inténtalo de nuevo con una sesión más larga.",
         }
 
-    def _generar_imagen_con_swap(self, scenario: dict, role: dict) -> str:
-        """
-        Ejecuta el ciclo completo de swap de VRAM:
-        evictar LLM → cargar Tiny-SD → generar → descargar Tiny-SD.
-
-        Devuelve la ruta al PNG generado, o cadena vacía si falla.
-        """
-        prompt_en = scenario.get("imagen_prompt_en", "university campus, realistic, soft colors")
-
-        # El vram_lock del LLM garantiza exclusividad
-        with self.llm.vram_lock:
-            # 1. Expulsar LLM (sin lock porque ya lo tenemos)
-            self.llm.evict_from_vram()
-
-            # 2. Cargar imagen y generar
-            imagen_path = ""
-            try:
-                self.image_gen.cargar()
-                result = self.image_gen.generar(prompt_en, "historia_social_ilustracion")
-                imagen_path = result.imagen_path if result.exito else ""
-            except Exception:
-                imagen_path = ""
-            finally:
-                # 3. Siempre descargar la imagen, pase lo que pase
-                self.image_gen.descargar()
-
-        # El LLM se recargará lazy en la próxima petición de chat
-        return imagen_path
+    # Método _generar_imagen_con_swap eliminado — sustituido por el
+    # esquema visual HTML generado en ui.components.render_esquema_carol_gray
+    # que se construye desde la propia dataclass HistoriaSocial.
