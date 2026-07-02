@@ -1,5 +1,8 @@
 # AsistenteTEA
 
+![Made for](https://img.shields.io/badge/made%20for-TEA%20%2F%20NEAE-blueviolet)
+![Accessibility](https://img.shields.io/badge/accessibility-WCAG--friendly-informational)
+
 **Simulador multimodal de habilidades sociales para estudiantes universitarios con TEA.**
 Trabajo de Fin de Grado. Ejecución íntegramente local.
 

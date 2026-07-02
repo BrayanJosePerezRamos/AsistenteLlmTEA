@@ -57,6 +57,23 @@ body, .gradio-container {
     transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
+/* Info bajo los controles (descripción secundaria de gr.Checkbox / gr.Dropdown).
+   Gradio la pinta muy tenue (contraste insuficiente para baja visión).
+   Se refuerza el color y peso en todos los modos. */
+.info,
+.block-info,
+label + .info,
+.checkbox-wrap .info,
+.wrap .info {
+    color: #374151 !important;
+    font-weight: 500 !important;
+    opacity: 1 !important;
+}
+.dark .info,
+.dark .block-info {
+    color: #d1d5db !important;
+}
+
 /* Pestañas más grandes y visibles ("Practicar escenario" / "Historia Social") */
 .tab-nav button {
     font-size: 1.20em !important;
@@ -140,6 +157,63 @@ body.high-contrast .block,
 body.high-contrast .form {
     background: #000 !important;
     color: #fff !important;
+}
+/* Headings de Markdown (título "Asistente", "Historia Social",
+   "Narración", etc.) — Gradio no los cubre con su variable color,
+   se quedan con el gris oscuro por defecto sobre el fondo negro. */
+body.high-contrast h1,
+body.high-contrast h2,
+body.high-contrast h3,
+body.high-contrast h4,
+body.high-contrast h5,
+body.high-contrast h6,
+body.high-contrast .prose h1,
+body.high-contrast .prose h2,
+body.high-contrast .prose h3,
+body.high-contrast .prose h4 {
+    color: #ffd700 !important;
+}
+/* Texto genérico de Markdown (subtítulo "Simulador de habilidades…",
+   descripciones de escenario, notas de estado, párrafos del cuerpo). */
+body.high-contrast .prose,
+body.high-contrast .prose p,
+body.high-contrast .prose li,
+body.high-contrast .prose strong,
+body.high-contrast .prose em,
+body.high-contrast .md,
+body.high-contrast .md p,
+body.high-contrast .md li,
+body.high-contrast .md strong,
+body.high-contrast .md em,
+body.high-contrast .markdown,
+body.high-contrast .markdown p {
+    color: #fff !important;
+}
+/* Labels de checkboxes y otros controles (toggles de accesibilidad,
+   dropdown/textbox labels). */
+body.high-contrast label,
+body.high-contrast label span,
+body.high-contrast .label-wrap,
+body.high-contrast .label-wrap span,
+body.high-contrast .block .label,
+body.high-contrast .block-info,
+body.high-contrast .info {
+    color: #ffd700 !important;
+}
+/* Nota de privacidad + <small> del pie */
+body.high-contrast #privacy-note,
+body.high-contrast #privacy-note *,
+body.high-contrast small {
+    color: #ffd700 !important;
+}
+/* Pestañas ("Practicar escenario" / "Historia Social") */
+body.high-contrast .tab-nav button {
+    color: #ffd700 !important;
+    background: #000 !important;
+}
+body.high-contrast .tab-nav button.selected {
+    color: #fff !important;
+    border-bottom-color: #ffd700 !important;
 }
 /* Burbujas chat — usuario en amarillo, bot en blanco. Cubrimos tanto
    el wrapper exterior (.message.user / .message.bot) como el interior
@@ -274,3 +348,70 @@ body.high-contrast .historia-directiva {
     border-radius: 6px;
     font-size: 1.05em;
 }
+
+/* ====================================================
+   Modo oscuro (tema Gradio dark o preferencia del sistema)
+   ==================================================== */
+/*
+   Problema: en el tema Soft dark, varios textos quedan oscuros sobre
+   fondo negro porque:
+     - Los <h1>/<h2>/<h3> de gr.Markdown heredan color de variables que
+       en dark quedan azuladas oscuras.
+     - Los labels de gr.Checkbox no reciben el color claro.
+     - Notas al pie tipo #privacy-note usan <small> con color hereditario.
+   Se fuerza color claro para todos los textos de UI genérica en dark.
+   Los paneles con fondo claro (esquema Carol Gray, banner sesión
+   finalizada) mantienen su color oscuro forzado — sus colores inline
+   ya garantizan contraste.
+*/
+
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6,
+.dark .prose h1, .dark .prose h2, .dark .prose h3,
+.dark .prose h4, .dark .prose h5, .dark .prose h6 {
+    color: #f3f4f6 !important;
+}
+
+.dark .prose, .dark .prose p, .dark .prose li,
+.dark .md, .dark .md p, .dark .md li, .dark .md strong, .dark .md em {
+    color: #e5e7eb !important;
+}
+
+.dark label, .dark .label-wrap span,
+.dark .form label span, .dark .block .label {
+    color: #f3f4f6 !important;
+}
+
+.dark #privacy-note, .dark #privacy-note * {
+    color: #cbd5e1 !important;
+}
+
+.dark small { color: #cbd5e1 !important; }
+
+/* Fallback por preferencia de sistema si Gradio no aplica .dark */
+@media (prefers-color-scheme: dark) {
+    body:not(.high-contrast) h1,
+    body:not(.high-contrast) h2,
+    body:not(.high-contrast) h3,
+    body:not(.high-contrast) h4,
+    body:not(.high-contrast) h5,
+    body:not(.high-contrast) h6 {
+        color: #f3f4f6;
+    }
+    body:not(.high-contrast) .prose,
+    body:not(.high-contrast) .prose p,
+    body:not(.high-contrast) .md,
+    body:not(.high-contrast) .md p,
+    body:not(.high-contrast) label {
+        color: #e5e7eb;
+    }
+    body:not(.high-contrast) #privacy-note,
+    body:not(.high-contrast) #privacy-note *,
+    body:not(.high-contrast) small {
+        color: #cbd5e1;
+    }
+}
+
+/* Los paneles del esquema Carol Gray usan color inline (#1e3a8a, etc.)
+   sobre backgrounds claros (#eff6ff, etc.) — el contraste es correcto
+   por sí mismo, no requiere override en dark. Solo si la variante
+   high-contrast está activa entramos en el bloque ya definido arriba. */

@@ -8,25 +8,6 @@
     'use strict';
 
     // ----------------------------------------------------------------
-    // Indicador "JS✓" temporal arriba derecha — confirma que el script
-    // se cargó. Se desvanece tras unos segundos.
-    // ----------------------------------------------------------------
-    function showLoadedBadge() {
-        const badge = document.createElement('div');
-        badge.textContent = 'JS✓';
-        badge.style.cssText = [
-            'position: fixed', 'top: 6px', 'right: 6px',
-            'background: #10b981', 'color: white',
-            'padding: 2px 8px', 'border-radius: 6px',
-            'font-size: 11px', 'font-weight: 600',
-            'z-index: 99999', 'opacity: 0.7',
-            'pointer-events: none', 'font-family: monospace'
-        ].join(';');
-        document.body.appendChild(badge);
-        setTimeout(() => { badge.style.opacity = '0.3'; }, 3000);
-    }
-
-    // ----------------------------------------------------------------
     // 1) Botón "1x ⇄ 1.5x" junto a cada <audio>.
     //    Cambia playbackRate HTML5 — no regenera WAV, no afecta pitch.
     // ----------------------------------------------------------------
@@ -254,5 +235,4 @@
     }).observe(document.body, { childList: true, subtree: true });
 
     document.querySelectorAll('audio').forEach(attachSpeedControl);
-    showLoadedBadge();
 }
