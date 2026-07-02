@@ -26,6 +26,7 @@ flagged/
 .env
 
 # Audio e imágenes generadas
+*.wav
 *.mp3
 *.ogg
 *.png
