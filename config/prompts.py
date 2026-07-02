@@ -54,6 +54,18 @@ Responde SOLO con el JSON. Nada de texto adicional. Todo en español.\
 
 
 def build_system_prompt(scenario: dict, role: dict) -> str:
+    """Compone el prompt de sistema para el LLM del roleplay.
+
+    Combina la descripción del escenario y del rol con las reglas
+    obligatorias definidas en ``SYSTEM_PROMPT_TEMPLATE``.
+
+    Args:
+        scenario: dict del escenario (nombre, descripción, contexto).
+        role: dict del rol/interlocutor (nombre, descripción completa).
+
+    Returns:
+        Cadena lista para inyectar como mensaje ``role="system"`` al LLM.
+    """
     return SYSTEM_PROMPT_TEMPLATE.format(
         role_nombre=role["nombre"],
         scenario_nombre=scenario["nombre"],
@@ -64,6 +76,21 @@ def build_system_prompt(scenario: dict, role: dict) -> str:
 
 
 def build_historia_prompt(scenario: dict, role: dict, conversation_text: str) -> str:
+    """Compone el prompt para que el LLM genere la Historia Social.
+
+    Inyecta el escenario, el rol y la conversación completa dentro de
+    ``HISTORIA_SOCIAL_PROMPT`` para que el LLM devuelva un JSON con las
+    claves ``descripcion``, ``perspectiva`` y ``directiva``.
+
+    Args:
+        scenario: dict del escenario usado durante la sesión.
+        role: dict del rol/interlocutor con el que se ha conversado.
+        conversation_text: transcripción legible de la conversación
+            (ver :func:`format_conversation_for_prompt`).
+
+    Returns:
+        Cadena lista para enviar al LLM como prompt de generación.
+    """
     return HISTORIA_SOCIAL_PROMPT.format(
         role_nombre=role["nombre"],
         scenario_nombre=scenario["nombre"],
@@ -72,9 +99,17 @@ def build_historia_prompt(scenario: dict, role: dict, conversation_text: str) ->
 
 
 def format_conversation_for_prompt(messages: list) -> str:
-    """
-    Converts Ollama-format messages (excluding the system prompt) to
-    a readable conversation string for the Historia Social prompt.
+    """Convierte los mensajes en formato Ollama en una transcripción legible.
+
+    Ignora el mensaje ``system`` y etiqueta cada turno como ``Alumno`` o
+    ``Interlocutor`` para incluirlo dentro del prompt de la Historia Social.
+
+    Args:
+        messages: lista de dicts ``{"role": ..., "content": ...}`` en
+            formato Ollama.
+
+    Returns:
+        Transcripción con un turno por línea, sin el prompt de sistema.
     """
     lines = []
     for msg in messages:

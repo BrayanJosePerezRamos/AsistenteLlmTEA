@@ -94,10 +94,21 @@ _SEMAFORO_CONFIG: dict = {
 
 
 def render_semaforo_idle() -> str:
+    """Devuelve el HTML del semáforo en estado inicial (círculo blanco)."""
     return _SEMAFORO_IDLE
 
 
 def render_semaforo(result: Optional[ToneResult]) -> str:
+    """Devuelve el HTML del semáforo con el color, título y consejo del
+    último análisis de tono.
+
+    Args:
+        result: :class:`~core.session.ToneResult` a mostrar; si es ``None``
+            se devuelve el estado idle.
+
+    Returns:
+        Fragmento HTML listo para ``gr.HTML``.
+    """
     if result is None:
         return render_semaforo_idle()
     cfg = _SEMAFORO_CONFIG[result.semaforo]
@@ -114,6 +125,15 @@ def render_semaforo(result: Optional[ToneResult]) -> str:
 # ------------------------------------------------------------------
 
 def render_semaforo_resumen(resumen: dict) -> str:
+    """Devuelve una línea Markdown con el recuento total y el porcentaje
+    de cada color del semáforo durante la sesión.
+
+    Args:
+        resumen: dict con las claves ``verde``, ``amarillo`` y ``rojo``.
+
+    Returns:
+        Cadena Markdown con los tres contadores y sus porcentajes.
+    """
     verde = resumen.get("verde", 0)
     amarillo = resumen.get("amarillo", 0)
     rojo = resumen.get("rojo", 0)

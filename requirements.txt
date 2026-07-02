@@ -13,9 +13,8 @@ onnxruntime>=1.17.0
 # Tone analysis
 pysentimiento>=0.7.0
 
-# Image generation
-diffusers==0.27.2
-accelerate>=0.30.0
+# Transformers: usado transitivamente por pysentimiento; se declara
+# explícitamente para fijar una versión conocida.
 transformers>=4.40.0
 
 # Audio / numeric

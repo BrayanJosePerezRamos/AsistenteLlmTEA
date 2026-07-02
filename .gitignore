@@ -19,7 +19,6 @@ models/**/*.safetensors
 models/**/*.gguf
 
 # Salidas runtime
-output/
 flagged/
 .gradio/
 

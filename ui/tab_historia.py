@@ -75,6 +75,20 @@ def build_historia_tab(historia_generator):
         # result_group, descripcion_md, perspectiva_md, directiva_md,
         # resumen_md, narration_audio, esquema_html, status_md, generate_btn
         def on_generate(session_state: SessionState, progress=gr.Progress()):
+            """Callback de «Generar Historia Social».
+
+            Valida que la sesión tenga suficientes turnos, invoca al
+            :class:`~core.historia_social.HistoriaSocialGenerator`, renderiza
+            el esquema Carol Gray y actualiza el estado del botón (ocupado
+            durante la generación, restaurado al terminar aunque falle).
+
+            Es un generador que hace ``yield`` de tuplas alineadas con el
+            wiring de ``app.py``.
+
+            Args:
+                session_state: estado de sesión compartido con la pestaña de chat.
+                progress: barra de progreso inyectada por Gradio.
+            """
             if historia_generator is None:
                 yield (
                     gr.update(visible=False),

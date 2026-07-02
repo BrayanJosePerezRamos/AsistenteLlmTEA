@@ -140,23 +140,63 @@ ROLES = {
 
 
 def get_scenario(scenario_id: str) -> dict:
+    """Devuelve el dict del escenario con el ``id`` indicado.
+
+    Args:
+        scenario_id: clave del escenario en ``SCENARIOS``.
+
+    Returns:
+        dict del escenario.
+
+    Raises:
+        KeyError: si ``scenario_id`` no existe.
+    """
     return SCENARIOS[scenario_id]
 
 
 def get_role(role_id: str) -> dict:
+    """Devuelve el dict del rol con el ``id`` indicado.
+
+    Args:
+        role_id: clave del rol en ``ROLES``.
+
+    Returns:
+        dict del rol.
+
+    Raises:
+        KeyError: si ``role_id`` no existe.
+    """
     return ROLES[role_id]
 
 
 def get_roles_for_scenario(scenario_id: str) -> list:
+    """Devuelve la lista de dicts de los roles compatibles con un escenario.
+
+    Args:
+        scenario_id: clave del escenario en ``SCENARIOS``.
+
+    Returns:
+        Lista de dicts de rol, en el orden declarado en el escenario.
+    """
     scenario = get_scenario(scenario_id)
     return [ROLES[r] for r in scenario["roles_disponibles"]]
 
 
 def scenario_choices() -> list:
-    """Returns list of (label, value) tuples for gr.Dropdown."""
+    """Devuelve las opciones de escenario en el formato ``(etiqueta, valor)``
+    que espera ``gr.Dropdown``.
+    """
     return [(s["nombre"], sid) for sid, s in SCENARIOS.items()]
 
 
 def role_choices_for_scenario(scenario_id: str) -> list:
-    """Returns list of (label, value) tuples for gr.Dropdown."""
+    """Devuelve las opciones de rol filtradas por escenario en el formato
+    ``(etiqueta, valor)`` que espera ``gr.Dropdown``.
+
+    Args:
+        scenario_id: escenario cuyos roles disponibles se quieren listar.
+
+    Returns:
+        Lista de tuplas ``(nombre_del_rol, id_del_rol)``.
+    """
     return [(r["nombre"], r["id"]) for r in get_roles_for_scenario(scenario_id)]

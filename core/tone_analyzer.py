@@ -59,8 +59,16 @@ _RAICES_INSULTO = {
     "cabron", "gilipoll", "gilipuert", "putada", "put",
     "jod", "mierd", "cono", "hosti", "zorra", "basura", "asco",
     "hijoputa", "hdp",
-    # Imperativos hostiles
-    "callat", "largat", "vete", "fuera",
+    # Imperativos hostiles (solo raíces seguras aquí; "vete" y "fuera"
+    # se comprueban abajo con match exacto para evitar falsos positivos
+    # como "veterinario" o "está fuera").
+    "callat", "largat",
+}
+
+# Palabras completas hostiles: match exacto, no por raíz. Evita
+# falsos positivos con palabras comunes que empezarían por la raíz.
+_PALABRAS_HOSTILES_EXACTAS = {
+    "vete", "fuera",
 }
 
 # Saludos / palabras cortas que NO son tono frío — el filtro
@@ -96,6 +104,8 @@ def _contiene_insulto(texto: str) -> bool:
     Ejemplos: "idiotas" → match "idiot"; "imbeciloide" → match "imbecil";
               "cabronazo" → match "cabron"; "putada" → match "put"."""
     tokens = _tokeniza(texto)
+    if any(tok in _PALABRAS_HOSTILES_EXACTAS for tok in tokens):
+        return True
     return any(tok.startswith(raiz) for tok in tokens for raiz in _RAICES_INSULTO)
 
 

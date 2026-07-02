@@ -135,6 +135,8 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
         # ================================================================
 
         def on_scenario_change(scenario_id):
+            """Al cambiar de escenario: recarga los roles compatibles y la
+            previsualización con el primero de ellos como valor por defecto."""
             choices = role_choices_for_scenario(scenario_id)
             default_role = choices[0][1]
             preview = _scenario_preview(scenario_id, default_role)
@@ -144,9 +146,12 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
             )
 
         def on_role_change(scenario_id, role_id):
+            """Actualiza la previsualización cuando el usuario elige otro rol."""
             return _scenario_preview(scenario_id, role_id)
 
         def on_start(scenario_id, role_id, state):
+            """Callback de «Iniciar sesión»: configura el estado, pide al LLM
+            el mensaje de apertura y activa los controles de chat."""
             if state is None:
                 state = SessionState()
             state.reset()
@@ -194,6 +199,13 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
             )
 
         def on_send(user_text, audio_path, chat_history, state):
+            """Callback de «Enviar»: transcribe audio si procede, analiza el
+            tono, invoca al LLM en streaming y añade los turnos al historial.
+
+            Es un generador que hace ``yield`` de tuplas para actualizar la
+            UI de forma incremental (mensaje del alumno visible inmediatamente,
+            luego el streaming del LLM y por último el audio TTS de la respuesta).
+            """
             _noop = gr.update()
             if state is None or not state.active:
                 yield chat_history, render_semaforo_idle(), gr.update(visible=False), _noop, _noop, state
@@ -277,6 +289,9 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
             yield chat_history, semaforo_html_val, audio_val, _noop, _noop, state
 
         def on_end(state, chat_history):
+            """Callback de «Terminar sesión»: desactiva controles de chat,
+            reactiva el botón de inicio y muestra el banner que indica al
+            usuario que vaya a la pestaña de Historia Social."""
             if state is None:
                 state = SessionState()
             state.active = False
