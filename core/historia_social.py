@@ -107,10 +107,6 @@ class HistoriaSocialGenerator:
                 audio_path = ""
 
         # ---- Paso 3: Resumen del semáforo ----
-        # (Antes había un paso "Generar imagen Tiny-SD" con swap VRAM.
-        #  Reemplazado por esquema visual HTML construido en la UI a
-        #  partir de esta misma dataclass — más rápido y sin "imágenes
-        #  raras".)
         _progress("Calculando resumen del semáforo social…", 0.9)
         resumen_semaforo: Dict[str, int] = {"verde": 0, "amarillo": 0, "rojo": 0}
         if self.tone_analyzer is not None:
@@ -160,7 +156,3 @@ class HistoriaSocialGenerator:
             "perspectiva": "No disponible.",
             "directiva": "Inténtalo de nuevo con una sesión más larga.",
         }
-
-    # Método _generar_imagen_con_swap eliminado — sustituido por el
-    # esquema visual HTML generado en ui.components.render_esquema_carol_gray
-    # que se construye desde la propia dataclass HistoriaSocial.

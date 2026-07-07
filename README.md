@@ -147,7 +147,7 @@ Variables de entorno opcionales:
 3. Al primer arranque verás en consola el warmup paralelo de los cuatro motores (LLM, STT, TTS y analizador de tono). Cuando termina se abre el navegador automáticamente en <http://127.0.0.1:7860>.
 4. Flujo típico:
    - En la pestaña **Practicar escenario**: elige escenario y rol, pulsa **Iniciar sesión**.
-   - Escribe o graba tu mensaje. El interlocutor responde en streaming; el semáforo se actualiza tras cada turno.
+   - Escribe o graba tu mensaje. El interlocutor responde en streaming; el semáforo se actualiza tras cada turno, mostrando color, consejo y tooltip explicativo.
    - Cuando termines, pulsa **Terminar sesión**.
    - Ve a la pestaña **Historia Social** y pulsa **Generar Historia Social**. Verás el esquema Carol Gray (descripción, perspectiva, directiva) con el resumen del semáforo y podrás escuchar la narración.
 
@@ -226,7 +226,7 @@ Todo el procesamiento ocurre en local:
 - STT, TTS y análisis de tono se ejecutan en CPU con modelos ya descargados.
 - No hay telemetría ni llamadas a APIs externas durante el uso normal.
 
-Los WAVs temporales se guardan en `output/` y pueden borrarse en cualquier momento.
+Los WAVs temporales se guardan en `output/` y pueden borrarse en cualquier momento. (En el repositorio se incluyen ejemplos de audio generados en runtime para demostración).
 
 ---
 

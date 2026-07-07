@@ -96,8 +96,7 @@ class TTSEngine:
         try:
             with wave.open(output_path, "wb") as wav_file:
                 # synthesize_wav() configura internamente channels/sampwidth/framerate
-                # del wave.Wave_write antes de escribir. La API antigua synthesize()
-                # exigía hacerlo manualmente y rompía con "channels not specified".
+                # del wave.Wave_write antes de escribir.
                 self._voice.synthesize_wav(texto, wav_file)
 
             # Calcular duración
