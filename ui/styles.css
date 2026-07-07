@@ -1,0 +1,417 @@
+/* ====================================================
+   AsistenteTEA — Estilos personalizados
+   ==================================================== */
+
+/* Fuente más legible para TEA */
+body, .gradio-container {
+    font-family: 'Segoe UI', 'Arial', sans-serif !important;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+/* Semáforo social — columna lateral pegajosa */
+#semaforo-col {
+    position: sticky;
+    top: 12px;
+    align-self: flex-start;
+}
+
+/* Chatbot — burbujas más claras */
+.message.user .bubble-wrap {
+    background-color: #dbeafe !important;
+    border-radius: 14px 14px 4px 14px !important;
+}
+
+.message.bot .bubble-wrap {
+    background-color: #f0fdf4 !important;
+    border-radius: 14px 14px 14px 4px !important;
+}
+
+/* Botón Iniciar — mayor contraste */
+.primary-btn {
+    font-size: 1.05em !important;
+    font-weight: 600 !important;
+}
+
+/* Historia Social — secciones con borde de color */
+.historia-descripcion {
+    border-left: 4px solid #3b82f6;
+    padding-left: 12px;
+    margin-bottom: 8px;
+}
+
+.historia-perspectiva {
+    border-left: 4px solid #8b5cf6;
+    padding-left: 12px;
+    margin-bottom: 8px;
+}
+
+.historia-directiva {
+    border-left: 4px solid #10b981;
+    padding-left: 12px;
+    margin-bottom: 8px;
+}
+
+/* Reducir ansiedad: sin animaciones bruscas */
+* {
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Info bajo los controles (descripción secundaria de gr.Checkbox / gr.Dropdown).
+   Gradio la pinta muy tenue (contraste insuficiente para baja visión).
+   Se refuerza el color y peso en todos los modos. */
+.info,
+.block-info,
+label + .info,
+.checkbox-wrap .info,
+.wrap .info {
+    color: #374151 !important;
+    font-weight: 500 !important;
+    opacity: 1 !important;
+}
+.dark .info,
+.dark .block-info {
+    color: #d1d5db !important;
+}
+
+/* Pestañas más grandes y visibles ("Practicar escenario" / "Historia Social") */
+.tab-nav button {
+    font-size: 1.20em !important;
+    padding: 14px 24px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.2px;
+    position: relative;  /* para badge dinámico desde JS */
+}
+.tab-nav button.selected {
+    border-bottom: 3px solid #3b82f6 !important;
+}
+
+/* Badge "●" sobre la pestaña de Historia Social cuando hay resultado
+   nuevo. Se añade/quita desde scripts.js. */
+.tab-nav button .new-badge {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    color: #dc3545;
+    font-size: 1.4em;
+    line-height: 1;
+    animation: pulse-badge 1.4s ease-in-out infinite;
+}
+@keyframes pulse-badge {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.45; }
+}
+
+/* ====================================================
+   Accesibilidad — toggles cliente
+   ==================================================== */
+
+/* Texto grande: aumenta las variables CSS de Gradio (--text-*) y la
+   tipografía base. Gradio usa estas variables en casi todos sus
+   componentes, así que sobrescribirlas afecta a todo el UI a la vez. */
+body.large-text {
+    --text-xxs: 12px !important;
+    --text-xs:  14px !important;
+    --text-sm:  16px !important;
+    --text-md:  18px !important;
+    --text-lg:  20px !important;
+    --text-xl:  24px !important;
+    --text-xxl: 30px !important;
+    --body-text-size: 18px !important;
+    font-size: 18px !important;
+}
+body.large-text .gradio-container,
+body.large-text .gradio-container * {
+    font-size: inherit;
+}
+body.large-text .tab-nav button {
+    font-size: 1.30em !important;
+}
+body.large-text .message .bubble-wrap,
+body.large-text textarea,
+body.large-text input {
+    font-size: 1.08em !important;
+}
+body.large-text label {
+    font-size: 1.05em !important;
+}
+/* Cabeceras del Markdown (título "Asistente", "Configurar escenario",
+   etc.) — Gradio las renderiza como h1/h2/h3 con font-size fijo, hay
+   que sobrescribirlas explícitamente. */
+body.large-text h1 { font-size: 2.6em !important; }
+body.large-text h2 { font-size: 2.0em !important; }
+body.large-text h3 { font-size: 1.6em !important; }
+body.large-text h4 { font-size: 1.3em !important; }
+body.large-text p, body.large-text li, body.large-text span, body.large-text div {
+    font-size: inherit;
+}
+
+/* Alto contraste: blanco sobre negro / negro sobre blanco con bordes
+   gruesos para máxima legibilidad (usuarios con baja visión). */
+body.high-contrast {
+    background: #000 !important;
+    color: #fff !important;
+}
+body.high-contrast .gradio-container,
+body.high-contrast .block,
+body.high-contrast .form {
+    background: #000 !important;
+    color: #fff !important;
+}
+/* Headings de Markdown (título "Asistente", "Historia Social",
+   "Narración", etc.) — Gradio no los cubre con su variable color,
+   se quedan con el gris oscuro por defecto sobre el fondo negro. */
+body.high-contrast h1,
+body.high-contrast h2,
+body.high-contrast h3,
+body.high-contrast h4,
+body.high-contrast h5,
+body.high-contrast h6,
+body.high-contrast .prose h1,
+body.high-contrast .prose h2,
+body.high-contrast .prose h3,
+body.high-contrast .prose h4 {
+    color: #ffd700 !important;
+}
+/* Texto genérico de Markdown (subtítulo "Simulador de habilidades…",
+   descripciones de escenario, notas de estado, párrafos del cuerpo). */
+body.high-contrast .prose,
+body.high-contrast .prose p,
+body.high-contrast .prose li,
+body.high-contrast .prose strong,
+body.high-contrast .prose em,
+body.high-contrast .md,
+body.high-contrast .md p,
+body.high-contrast .md li,
+body.high-contrast .md strong,
+body.high-contrast .md em,
+body.high-contrast .markdown,
+body.high-contrast .markdown p {
+    color: #fff !important;
+}
+/* Labels de checkboxes y otros controles (toggles de accesibilidad,
+   dropdown/textbox labels). */
+body.high-contrast label,
+body.high-contrast label span,
+body.high-contrast .label-wrap,
+body.high-contrast .label-wrap span,
+body.high-contrast .block .label,
+body.high-contrast .block-info,
+body.high-contrast .info {
+    color: #ffd700 !important;
+}
+/* Nota de privacidad + <small> del pie */
+body.high-contrast #privacy-note,
+body.high-contrast #privacy-note *,
+body.high-contrast small {
+    color: #ffd700 !important;
+}
+/* Pestañas ("Practicar escenario" / "Historia Social") */
+body.high-contrast .tab-nav button {
+    color: #ffd700 !important;
+    background: #000 !important;
+}
+body.high-contrast .tab-nav button.selected {
+    color: #fff !important;
+    border-bottom-color: #ffd700 !important;
+}
+/* Burbujas chat — usuario en amarillo, bot en blanco. Cubrimos tanto
+   el wrapper exterior (.message.user / .message.bot) como el interior
+   (.bubble-wrap) y FORZAMOS color en todos los descendientes para que
+   no se quede texto blanco heredado del tema oscuro de Gradio. */
+body.high-contrast .message.user,
+body.high-contrast .message.user .bubble-wrap,
+body.high-contrast .message.user .bubble-wrap *,
+body.high-contrast .message.user .md,
+body.high-contrast .message.user p {
+    background: #ffd700 !important;
+    color: #000 !important;
+    border-color: #fff !important;
+}
+body.high-contrast .message.bot,
+body.high-contrast .message.bot .bubble-wrap,
+body.high-contrast .message.bot .bubble-wrap *,
+body.high-contrast .message.bot .md,
+body.high-contrast .message.bot p {
+    background: #fff !important;
+    color: #000 !important;
+    border-color: #ffd700 !important;
+}
+/* Contorno explícito en la burbuja entera */
+body.high-contrast .message.user .bubble-wrap {
+    border: 2px solid #fff !important;
+}
+body.high-contrast .message.bot .bubble-wrap {
+    border: 2px solid #ffd700 !important;
+}
+/* Fondo del propio chatbot (zona vacía alrededor de las burbujas) */
+body.high-contrast #main-chatbot,
+body.high-contrast #main-chatbot .bubble-wrap,
+body.high-contrast .chatbot {
+    background: #000 !important;
+}
+body.high-contrast button {
+    background: #ffd700 !important;
+    color: #000 !important;
+    border: 2px solid #fff !important;
+}
+body.high-contrast input,
+body.high-contrast textarea {
+    background: #fff !important;
+    color: #000 !important;
+    border: 2px solid #ffd700 !important;
+}
+/* Checkbox en alto contraste: el native tick puede no verse por el
+   accent-color del navegador o por estilos Gradio. Usamos appearance:none
+   + un ✓ dibujado en CSS :checked::after para garantizar visibilidad. */
+body.high-contrast input[type="checkbox"] {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    width: 24px !important;
+    height: 24px !important;
+    background: #000 !important;
+    border: 3px solid #ffd700 !important;
+    border-radius: 4px !important;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+}
+body.high-contrast input[type="checkbox"]:checked {
+    background: #ffd700 !important;
+}
+body.high-contrast input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -55%);
+    font-size: 22px;
+    font-weight: 900;
+    color: #000;
+    line-height: 1;
+}
+body.high-contrast .session-ended-banner,
+body.high-contrast .session-ended-banner * {
+    background: #000 !important;
+    color: #ffd700 !important;
+    border-color: #ffd700 !important;
+}
+/* Esquema Carol Gray en alto contraste — los colores inline tienen
+   máxima prioridad, por eso usamos !important para sobrescribirlos. */
+body.high-contrast .esquema-carol-gray,
+body.high-contrast .esquema-carol-gray * {
+    background: #000 !important;
+    color: #ffd700 !important;
+    border-color: #ffd700 !important;
+}
+body.high-contrast .esquema-cabecera {
+    border: 2px solid #ffd700 !important;
+}
+body.high-contrast .historia-descripcion,
+body.high-contrast .historia-perspectiva,
+body.high-contrast .historia-directiva {
+    border-left: 5px solid #ffd700 !important;
+    background: #000 !important;
+}
+
+/* Tooltip al hacer hover sobre el semáforo (atributo data-tooltip).
+   No requiere JS — sólo CSS. */
+[data-tooltip] {
+    cursor: help;
+}
+[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 8px;
+    background: #1f2937;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.85em;
+    line-height: 1.4;
+    white-space: normal;
+    width: max-content;
+    max-width: 260px;
+    z-index: 9999;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    pointer-events: none;
+}
+
+/* Mensaje destacado al terminar sesión */
+.session-ended-banner {
+    background: #ecfdf5;
+    border-left: 4px solid #10b981;
+    padding: 14px 18px;
+    border-radius: 6px;
+    font-size: 1.05em;
+}
+
+/* ====================================================
+   Modo oscuro (tema Gradio dark o preferencia del sistema)
+   ==================================================== */
+/*
+   Problema: en el tema Soft dark, varios textos quedan oscuros sobre
+   fondo negro porque:
+     - Los <h1>/<h2>/<h3> de gr.Markdown heredan color de variables que
+       en dark quedan azuladas oscuras.
+     - Los labels de gr.Checkbox no reciben el color claro.
+     - Notas al pie tipo #privacy-note usan <small> con color hereditario.
+   Se fuerza color claro para todos los textos de UI genérica en dark.
+   Los paneles con fondo claro (esquema Carol Gray, banner sesión
+   finalizada) mantienen su color oscuro forzado — sus colores inline
+   ya garantizan contraste.
+*/
+
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6,
+.dark .prose h1, .dark .prose h2, .dark .prose h3,
+.dark .prose h4, .dark .prose h5, .dark .prose h6 {
+    color: #f3f4f6 !important;
+}
+
+.dark .prose, .dark .prose p, .dark .prose li,
+.dark .md, .dark .md p, .dark .md li, .dark .md strong, .dark .md em {
+    color: #e5e7eb !important;
+}
+
+.dark label, .dark .label-wrap span,
+.dark .form label span, .dark .block .label {
+    color: #f3f4f6 !important;
+}
+
+.dark #privacy-note, .dark #privacy-note * {
+    color: #cbd5e1 !important;
+}
+
+.dark small { color: #cbd5e1 !important; }
+
+/* Fallback por preferencia de sistema si Gradio no aplica .dark */
+@media (prefers-color-scheme: dark) {
+    body:not(.high-contrast) h1,
+    body:not(.high-contrast) h2,
+    body:not(.high-contrast) h3,
+    body:not(.high-contrast) h4,
+    body:not(.high-contrast) h5,
+    body:not(.high-contrast) h6 {
+        color: #f3f4f6;
+    }
+    body:not(.high-contrast) .prose,
+    body:not(.high-contrast) .prose p,
+    body:not(.high-contrast) .md,
+    body:not(.high-contrast) .md p,
+    body:not(.high-contrast) label {
+        color: #e5e7eb;
+    }
+    body:not(.high-contrast) #privacy-note,
+    body:not(.high-contrast) #privacy-note *,
+    body:not(.high-contrast) small {
+        color: #cbd5e1;
+    }
+}
+
+/* Los paneles del esquema Carol Gray usan color inline (#1e3a8a, etc.)
+   sobre backgrounds claros (#eff6ff, etc.) — el contraste es correcto
+   por sí mismo, no requiere override en dark. Solo si la variante
+   high-contrast está activa entramos en el bloque ya definido arriba. */

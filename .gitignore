@@ -1,9 +1,53 @@
+# Entorno virtual
 .venv/
+
+# Python bytecode y caches
 __pycache__/
 *.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# Modelos (pesados, no van a git)
 models/piper/*.onnx
 models/piper/*.json
-output/
+models/**/*.bin
+models/**/*.safetensors
+models/**/*.gguf
+
+# Salidas runtime
+flagged/
+.gradio/
+
+# Secrets
 .env
+
+# Audio e imágenes generadas
 *.wav
+*.mp3
+*.ogg
 *.png
+
+# Backups y temporales
+*.bak
+*.swp
+*.tmp
+*~
+
+# IDE / editores
+.vscode/
+.idea/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Otros
+memoria/
