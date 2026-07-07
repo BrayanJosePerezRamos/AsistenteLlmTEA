@@ -12,7 +12,7 @@ Brayan José Pérez Ramos, 2026.
 
 ## Descripción
 
-AsistenteTEA es una aplicación de escritorio, con interfaz web local, que permite al alumnado universitario con Trastorno del Espectro Autista (TEA) practicar situaciones sociales del contexto académico en un entorno seguro. El estudiante elige un escenario (revisión de examen, trabajo en grupo, tutoría, presentación oral) y un interlocutor (profesor estricto, profesor comprensivo, compañero informal, compañero conflictivo o compañero crítico), y mantiene una conversación por texto o voz. Un pequeño modelo de lenguaje ejecuta el rol del interlocutor y responde en tiempo real.
+AsistenteTEA es una aplicación de escritorio, con interfaz web local, que permite al alumnado universitario con Trastorno del Espectro Autista (TEA) practicar situaciones sociales del contexto académico en un entorno seguro. El estudiante elige un escenario (revisión de examen, trabajo en grupo, tutoría con profesor, preguntas tras presentación) y un interlocutor (profesor estricto, profesor comprensivo, compañero informal, compañero conflictivo o compañero crítico), y mantiene una conversación por texto o voz. Un pequeño modelo de lenguaje ejecuta el rol del interlocutor y responde en tiempo real.
 
 Durante la conversación, cada mensaje del alumno se analiza con un clasificador de emociones e ironía en español, y el resultado se muestra como un **Semáforo Social** (verde/amarillo/rojo) con un consejo breve. Al finalizar la sesión, un módulo genera una **Historia Social** siguiendo la metodología de Carol Gray (descripción objetiva, perspectiva del interlocutor y directiva accionable en primera persona), acompañada de un esquema visual y una narración TTS opcional. Todos los datos permanecen en la máquina del usuario.
 
@@ -20,7 +20,7 @@ Durante la conversación, cada mensaje del alumno se analiza con un clasificador
 
 ## Características
 
-- Chat conversacional por texto y voz (STT + TTS neuronales, todo en CPU).
+- Chat conversacional por texto y voz (STT + TTS neuronales en CPU; el LLM aprovecha la GPU si está disponible).
 - Cuatro escenarios y cinco roles combinables, con diferentes niveles de dificultad.
 - Semáforo Social en cada turno, con consejo, tooltip explicativo y soporte para daltonismo (emoji + glyph ✓ / ⚠ / ✗).
 - Historia Social estructurada según el método de Carol Gray, con esquema visual y narración TTS.
@@ -36,6 +36,7 @@ Durante la conversación, cada mensaje del alumno se analiza con un clasificador
 - **RAM:** 8 GB recomendados (el LLM cuantizado + los modelos de voz caben cómodamente).
 - **Disco:** unos 5 GB libres para modelos.
 - **Ollama:** servidor local para servir el LLM.
+- **GPU:** opcional. Una GPU NVIDIA con 4 GB de VRAM acelera notablemente el LLM; sin ella todo funciona en CPU.
 - **Micrófono:** opcional, solo si se quiere usar la entrada por voz.
 
 ---
@@ -47,8 +48,8 @@ Los tres pasos habituales — clonar, entorno virtual, dependencias Python — y
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/BrayanJosePerezRamos/AsistenteTEA.git
-cd AsistenteTEA
+git clone https://github.com/BrayanJosePerezRamos/AsistenteLlmTEA.git
+cd AsistenteLlmTEA
 ```
 
 ### 2. Crear un entorno virtual
@@ -92,16 +93,26 @@ ollama list
 
 ### 5. Voces Piper (TTS)
 
-Las dos voces en español ya están incluidas en el repositorio, en `models/piper/`:
+El proyecto usa dos voces en español que deben colocarse en `models/piper/` (no se incluyen en el repositorio por su tamaño):
 
 - `es_ES-sharvard-medium.onnx` (principal, 22 050 Hz)
 - `es_ES-mls_9972-low.onnx` (respaldo, 16 000 Hz)
 
-Cada `.onnx` va acompañado de su `.onnx.json`. **No es necesario descargarlas.**
+Descarga de cada voz junto a su `.onnx.json` desde el repositorio oficial de voces de Piper:
+
+```bash
+mkdir -p models/piper && cd models/piper
+base=https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/es/es_ES
+wget $base/sharvard/medium/es_ES-sharvard-medium.onnx
+wget $base/sharvard/medium/es_ES-sharvard-medium.onnx.json
+wget $base/mls_9972/low/es_ES-mls_9972-low.onnx
+wget $base/mls_9972/low/es_ES-mls_9972-low.onnx.json
+cd ../..
+```
 
 ### 6. Modelos que se descargan automáticamente en el primer arranque
 
-- **faster-whisper (STT):** al arrancar por primera vez descarga el modelo `small` (~460 MB en int8). Cambia el tamaño con la variable de entorno `TEA_STT_MODEL` (opciones: `tiny`, `base`, `small`, `medium`).
+- **faster-whisper (STT):** al arrancar por primera vez descarga el modelo `small` (~244 MB de pesos en int8). Cambia el tamaño con la variable de entorno `TEA_STT_MODEL` (opciones: `tiny`, `base`, `small`, `medium`).
 - **pysentimiento (tono):** descarga en el primer uso los dos clasificadores en español (`emotion` e `irony`).
 
 En ambos casos hace falta conexión a internet **solo la primera vez**. Los siguientes arranques son totalmente offline.
@@ -122,7 +133,7 @@ Variables de entorno opcionales:
 
 ## Uso
 
-1. Asegúrate de que Ollama está corriendo (se lanza como servicio tras la instalación). Sino, arráncalo con:
+1. Asegúrate de que Ollama está corriendo (se lanza como servicio tras la instalación). Si no, arráncalo con:
 
    ```bash
    ollama serve
@@ -174,9 +185,9 @@ AsistenteTEA/
 │   ├── components.py     # Semáforo y esquema Carol Gray (HTML)
 │   ├── styles.css        # Accesibilidad (texto grande, alto contraste)
 │   └── scripts.js        # Toggles persistidos en localStorage
-├── models/piper/         # Voces Piper en español (incluidas)
-├── tests/                # Dataset etiquetado y evaluación del ToneAnalyzer
-├── output/               # WAVs generados en runtime (Audio TTS)
+├── models/piper/         # Voces Piper en español (descarga manual, ver Instalación)
+├── tests/                # Dataset etiquetado, evaluación del ToneAnalyzer y benchmark de latencia
+├── output/               # WAVs de ejemplo y audios generados en runtime
 ├── requirements.txt
 ```
 
@@ -195,6 +206,15 @@ La salida incluye accuracy global, desglose por dificultad, accuracy por color, 
 - Global: 78,3 %
 - Subconjunto fácil: 93,3 %
 - Subconjunto difícil: 63,3 %
+
+También se incluye un benchmark de la latencia del primer token del LLM (requiere Ollama corriendo):
+
+```bash
+python -m tests.benchmark_latency         # con GPU
+python -m tests.benchmark_latency --cpu   # forzando CPU
+```
+
+En el hardware de referencia (RTX 3050 Ti, 4 GB de VRAM) el primer token llega en ~0,45 s de media, dentro del umbral de 3 s fijado en la memoria.
 
 ---
 
