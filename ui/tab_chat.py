@@ -151,7 +151,14 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
 
         def on_start(scenario_id, role_id, state):
             """Callback de «Iniciar sesión»: configura el estado, pide al LLM
-            el mensaje de apertura y activa los controles de chat."""
+            el mensaje de apertura y activa los controles de chat.
+
+            Es un generador: el mensaje de apertura aparece token a token
+            en cuanto el LLM lo emite (la latencia percibida coincide así
+            con el primer token del RNF-01) y el TTS se sintetiza después
+            de mostrar el texto, sin retrasar su aparición.
+            """
+            _noop = gr.update()
             if state is None:
                 state = SessionState()
             state.reset()
@@ -164,7 +171,20 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
             system_prompt = build_system_prompt(scenario, role)
             state.messages = [{"role": "system", "content": system_prompt}]
 
-            # Mensaje de apertura del LLM
+            # Feedback inmediato: burbuja vacía y botón de inicio
+            # deshabilitado mientras llega el primer token.
+            chat_history = [{"role": "assistant", "content": ""}]
+            yield (
+                state,
+                chat_history,
+                render_semaforo_idle(),
+                gr.update(value=None, visible=False),
+                _noop, _noop, _noop, _noop,
+                gr.update(interactive=False),  # start_btn
+                "_Generando apertura…_",
+            )
+
+            # Mensaje de apertura del LLM, en streaming hacia la UI
             opener_messages = state.messages + [
                 {"role": "user", "content": "Hola."}
             ]
@@ -172,20 +192,24 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
             try:
                 for token in llm.chat_stream(opener_messages):
                     opener += token
+                    chat_history[-1] = {"role": "assistant", "content": opener}
+                    yield (
+                        state, chat_history,
+                        _noop, _noop, _noop, _noop, _noop, _noop, _noop, _noop,
+                    )
             except RuntimeError as e:
                 opener = f"⚠️ Error al conectar con Ollama: {e}"
+                chat_history[-1] = {"role": "assistant", "content": opener}
 
             state.messages.append({"role": "user", "content": "Hola."})
             state.add_assistant_message(opener)
 
-            chat_history = [{"role": "assistant", "content": opener}]
-
-            # TTS del opener en background
+            # TTS del opener, una vez el texto ya está en pantalla
             audio_path = None
             if tts is not None:
                 audio_path = _tts_background(tts, opener, "opener")
 
-            return (
+            yield (
                 state,
                 chat_history,
                 render_semaforo_idle(),
@@ -254,16 +278,35 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
             state.add_user_message(user_text)
             yield chat_history, render_semaforo_idle(), gr.update(visible=False), gr.update(value=""), gr.update(value=None), state
 
-            # Análisis de tono (CPU, rápido) — en paralelo al streaming
-            tone_result = None
+            # Análisis de tono en un hilo aparte, en paralelo real al
+            # streaming del LLM: el semáforo se actualiza en cuanto hay
+            # resultado, sin retrasar el primer token de la respuesta.
+            tone_holder = {}
+            tone_thread = None
             if tone_analyzer is not None:
-                try:
-                    tone_result = tone_analyzer.analizar(user_text)
-                    state.add_tone_result(tone_result)
-                except Exception as e:
-                    print(f"[on_send] Error en tone_analyzer: {e}")
+                def _analizar_tono():
+                    try:
+                        tone_holder["result"] = tone_analyzer.analizar(user_text)
+                    except Exception as e:
+                        print(f"[on_send] Error en tone_analyzer: {e}")
+                        tone_holder["result"] = None
+                tone_thread = threading.Thread(target=_analizar_tono, daemon=True)
+                tone_thread.start()
+                semaforo_html_val = render_semaforo_idle()  # pendiente de resultado
+            else:
+                semaforo_html_val = render_semaforo(None)
 
-            semaforo_html_val = render_semaforo(tone_result)
+            tone_pendiente = tone_thread is not None
+
+            def _refrescar_semaforo():
+                """Incorpora el resultado del tono cuando el hilo termina."""
+                nonlocal semaforo_html_val, tone_pendiente
+                if tone_pendiente and "result" in tone_holder:
+                    tone_result = tone_holder["result"]
+                    if tone_result is not None:
+                        state.add_tone_result(tone_result)
+                    semaforo_html_val = render_semaforo(tone_result)
+                    tone_pendiente = False
 
             # Streaming de la respuesta del LLM
             partial = ""
@@ -272,10 +315,17 @@ def build_chat_tab(llm, tone_analyzer, stt, tts):
                 for token in llm.chat_stream(state.messages):
                     partial += token
                     chat_history[-1] = {"role": "assistant", "content": partial}
+                    _refrescar_semaforo()
                     yield chat_history, semaforo_html_val, gr.update(visible=False), _noop, _noop, state
             except RuntimeError as e:
                 partial = f"⚠️ Error: {e}"
                 chat_history[-1] = {"role": "assistant", "content": partial}
+
+            # Garantizar que el resultado del tono queda registrado aunque
+            # el streaming haya terminado antes que el análisis.
+            if tone_thread is not None:
+                tone_thread.join(timeout=5.0)
+                _refrescar_semaforo()
 
             state.add_assistant_message(partial)
 
